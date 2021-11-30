@@ -13,12 +13,17 @@ setwd("/Users/matthewhartz/Documents/r_practice/BSAN460/data")
 #install.packages("tidytext")
 #install.packages("wordcloud")
 #install.packages("textdata")
+install.packages("sentimentr")
+install.packages('RTextTools')
+library(sentimentr)
 library(dplyr)
 library(tm)
 library(textstem)
 library(tidytext) 
 library(textdata)
 library(wordcloud)
+library(e1071)
+library(RTextTools)
 
 #Load in IMDB Dataset
 df <- read.csv("IMDB_Dataset.csv")
@@ -29,6 +34,11 @@ str(df)
 
 #Are the tags of the dataset balanced
 table(df$sentiment)
+
+c(stopwords('en'),"make","see","story","people","watch","get","may","seem","any","scene","stay","back","part","role","thing","look","first",
+  "play","real","get","life","act","way","lot","still","come","plot","big","try","scene","work","guy",
+  "old","man","take","director","ever","now","actor","movie","something","use","two","give","look","much","really","say","act","watch","play",
+  "will","can","also","show","think","know","find","even","movie","film","one","get","just","time","character")
 
 
 # Create a function that performs all the pre-processing techniques to an entire column
@@ -153,3 +163,39 @@ head(cloud_data %>% arrange(-counts))  # these are the most common words
 wordcloud(words=cloud_data$term, freq=cloud_data$counts, random.order=FALSE, colors=brewer.pal(7, "Greens"), max.words = 70, min.freq = 20)
 
 #-----------------------------------------------------------------------
+
+
+#SentimentR model
+
+df_100 <- df[1:100,]
+
+
+
+sentiment_r <- sentiment_by(df_100$review)
+
+summary(sentiment_r$ave_sentiment)
+
+df_100$ave_sentiment <- sentiment_r$ave_sentiment
+df_100$sd_sentiment=sentiment_r$sd
+
+
+df_100$sent_str <- ifelse(df_100$ave_sentiment > 0, "positive", "negative")
+
+df_100$sentimentR_match <- ifelse(df_100$sent_str == df_100$sentiment, 1, 0)
+
+sentimentR_accuracy <- sum(sentimentR_match)/nrow(df_100) #accuracy is .71
+
+
+#Naive Bayes Classifier
+df_100_clean <- pre_processing_data_frame_fct(df_100$review)
+my_tdm_100 <- TermDocumentMatrix(df_100_clean)
+
+mat <- as.matrix(my_tdm_100)
+classifier = naiveBayes(mat[1:100,], as.factor(df_100[1:100,2]))
+                         
+
+predicted = predict(classifier, mat[1:100,]); predicted
+table(df_100[1:100, 2], predicted)
+recall_accuracy(df_100[1:100, 2], predicted)
+
+                        

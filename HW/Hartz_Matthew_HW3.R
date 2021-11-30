@@ -46,7 +46,7 @@ pre_processing_data_frame_fct <- function(text_column){
 
 
 ### Apply the pre-processing function to my_data and save the output to my_data_clean
-my_data_clean <- pre_processing_data_frame_fct(text_emotion$Content)
+my_data_clean <- pre_processing_data_frame_fct(df$review)
 my_data_clean
 
 # transform the clean data into a term document matrix
